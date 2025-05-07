@@ -1,0 +1,142 @@
+// generator dbml {
+//   provider = "prisma-dbml-generator"
+// }
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  avatar       String?
+  passwordHash String   @db.VarChar(255)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  role         Role     @default(USER)
+  Loan         Loan[]
+}
+
+model Client {
+  id          String        @id @default(uuid())
+  name        String
+  email       String        @unique
+  telephone   String?
+  address     String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  role        Role          @default(CLIENT)
+  loan        Loan[]
+  Reservation Reservation[]
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  cor         String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  Product     Product[]
+}
+
+model Product {
+  id                Int             @id @default(autoincrement())
+  title             String
+  description       String?
+  barcode           String?
+  categoryId        Int
+  category          Category        @relation(fields: [categoryId], references: [id])
+  acquisition_price Float
+  editorial         Float
+  year_publication  Int
+  date_acquisition  DateTime
+  condition         String
+  disposability     Boolean
+  image             String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  loan              Loan[]
+  TypeProduct       TypeProduct?    @relation(fields: [typeProductId], references: [id])
+  typeProductId     Int?
+  Reservation       Reservation[]
+  ProductAuthor     ProductAuthor[]
+  Author            Author?         @relation(fields: [authorId], references: [id])
+  authorId          Int?
+}
+
+model TypeProduct {
+  id        Int       @id @default(autoincrement())
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Product   Product[]
+}
+
+model Reservation {
+  id         Int      @id @default(autoincrement())
+  clientId   String
+  client     Client   @relation(fields: [clientId], references: [id])
+  productId  Int
+  product    Product  @relation(fields: [productId], references: [id])
+  limitDate  DateTime
+  reservedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Loan {
+  id          Int       @id @default(autoincrement())
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id])
+  productId   Int
+  product     Product   @relation(fields: [productId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  status      Status    @default(BORROWED)
+  observation String?
+  borrowedAt  DateTime  @default(now())
+  returnDate  DateTime?
+  returnedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model ProductAuthor {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  authorId  Int
+  author    Author   @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Author {
+  id            Int             @id @default(autoincrement())
+  name          String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  Product       Product[]
+  ProductAuthor ProductAuthor[]
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  USER
+  CLIENT
+}
+
+enum Status {
+  BORROWED
+  RETURNED
+  LATE
+}
